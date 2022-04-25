@@ -4,10 +4,92 @@ import numpy as np
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 
+class CallBack(tf.keras.callbacks.Callback):
+	def on_epoch_end(self, epochs, logs={}):
+		if(logs.get('accuracy') >= 0.999):
+			print("I have reached the expected accuracy!")
+			self.model.stop_training = True
+
+def get_model_architecture():
+
+	# To convert this to a convolutional neural network, we simply use convolutional layers
+	# in our model definition. We’ll also add pooling layers.
+	# In this case, we want the layer to learn 64 convolutions. It will randomly initialize
+	# these, and over time will learn the filter values that work best to match the input
+	# val‐ ues to their labels. The (3, 3) indicates the size of the filter.
+
+	# Do note, however, that because Conv2D layers are designed for multicolor images, we’re specifying
+	# the third dimension as 1, so our input shape is 28 × 28 × 1. Color images will typically have a 3
+	# as the third parameter as they are stored as values of R, G, and B.
+	model = keras.Sequential([
+								keras.layers.Conv2D(64, (3,3), activation = tf.nn.relu, input_shape = (28, 28, 1)),
+								keras.layers.MaxPooling2D(2,2),
+								keras.layers.Conv2D(64, (3, 3), activation=tf.nn.relu),
+								keras.layers.MaxPooling2D(2, 2),
+								keras.layers.Flatten(),
+								keras.layers.Dense(128, activation = tf.nn.relu),
+								keras.layers.Dense(10, activation=tf.nn.softmax)
+							 ])
+
+	return(model)
+pass
+
+def get_data():
+
+	data = tf.keras.datasets.fashion_mnist
+	(train_images, train_label), (test_images, test_label) = data.load_data()
+
+	# There are a few things to note here. Remember earlier when I said that the input
+	# shape for the images had to match what a Conv2D layer would expect, and we updated it
+	# to be a 28 × 28 × 1 image? The data also had to be reshaped accordingly. 28 × 28 is the
+	# number of pixels in the image, and 1 is the number of color channels. You’ll typi‐ cally
+	# find that this is 1 for a grayscale image or 3 for a color image, where there are three
+	# channels (red, green, and blue), with the number indicating the intensity of that color.
+	# So, prior to normalizing the images, we also reshape each array to have that extra dimension.
+	# The following code changes our training dataset from 60,000 images, each 28 × 28
+	# (and thus a 60,000 × 28 × 28 array), to 60,000 images, each 28 × 28 × 1:
+	train_images = train_images.reshape(60000, 28, 28, 1)
+	train_images = train_images / 255.0
+	test_images = test_images.reshape(10000, 28, 28, 1)
+	test_images = test_images / 255.0
+
+	return((train_images, train_label), (test_images, test_label))
+pass
+
+def train_model():
+
+	model = get_model_architecture()
+	(train_images, train_label), (test_images, test_label) = get_data()
+
+	model.compile(optimizer = 'adam',
+				  loss= 'sparse_categorical_crossentropy',
+				  metrics = ['accuracy'])
+
+	callback = CallBack()
+	model.fit(train_images,
+			  train_label,
+			  epochs = 50,
+			  callbacks = [callback])
+
+	model.evaluate(test_images, test_label)
+	model.save('saved_models/modelCH03.h5')
+
+	return(model)
+pass
+
 
 if __name__ == '__main__':
-	print("chapter 03")
 
+	print("Chapter 03")
+	# trained_model = train_model()
+	modelCH03 = tf.keras.models.load_model('saved_models/modelCH03.h5')
+	(train_images, train_label), (test_images, test_label) = get_data()
+
+	print(modelCH03.summary())
+
+	# classifications = modelCH03.predict(test_images)
+	# print(classifications[0])
+	# print(test_label[0])
 pass
 
 # In the chapter 02:
@@ -36,5 +118,14 @@ pass
 
 # A convolution is simply a filter of weights that are used to multiply a pixel with its neighbors
 # to get a new value for the pixel.
+
+# These examples also show that the amount of information in the image is reduced, so we can potentially
+# learn a set of filters that reduce the image to features, and those features can be matched to labels
+# as before. Previously, we learned parameters that were used in neurons to match inputs to outputs.
+# Similarly, the best filters to match inputs to outputs can be learned over time
+
+# Pooling
+# Pooling is the process of eliminating pixels in your image while maintaining the semantics of the
+# content within the image
 
 
