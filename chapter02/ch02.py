@@ -1,5 +1,6 @@
-import keras
+# import keras
 import tensorflow as tf
+from tensorflow import keras
 import numpy as np
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
