@@ -6,7 +6,7 @@ from tensorflow.keras.layers import Dense
 
 class CallBack(tf.keras.callbacks.Callback):
 	def on_epoch_end(self, epochs, logs={}):
-		if(logs.get('accuracy') >= 0.999):
+		if(logs.get('accuracy') >= 0.95):
 			print("I have reached the expected accuracy!")
 			self.model.stop_training = True
 
@@ -21,15 +21,15 @@ def get_model_architecture():
 	# Do note, however, that because Conv2D layers are designed for multicolor images, we’re specifying
 	# the third dimension as 1, so our input shape is 28 × 28 × 1. Color images will typically have a 3
 	# as the third parameter as they are stored as values of R, G, and B.
-	model = keras.Sequential([
-								keras.layers.Conv2D(64, (3,3), activation = tf.nn.relu, input_shape = (28, 28, 1)),
-								keras.layers.MaxPooling2D(2,2),
-								keras.layers.Conv2D(64, (3, 3), activation=tf.nn.relu),
-								keras.layers.MaxPooling2D(2, 2),
-								keras.layers.Flatten(),
-								keras.layers.Dense(128, activation = tf.nn.relu),
-								keras.layers.Dense(10, activation=tf.nn.softmax)
-							 ])
+	model = Sequential([
+						keras.layers.Conv2D(64, (3,3), activation = tf.nn.relu, input_shape = (28, 28, 1)),
+						keras.layers.MaxPooling2D(2,2),
+						keras.layers.Conv2D(64, (3, 3), activation=tf.nn.relu),
+						keras.layers.MaxPooling2D(2, 2),
+						keras.layers.Flatten(),
+						Dense(128, activation = tf.nn.relu),
+						keras.layers.Dense(10, activation=tf.nn.softmax)
+						])
 
 	return(model)
 pass
@@ -76,7 +76,6 @@ def train_model():
 
 	return(model)
 pass
-
 
 if __name__ == '__main__':
 
@@ -128,4 +127,30 @@ pass
 # Pooling is the process of eliminating pixels in your image while maintaining the semantics of the
 # content within the image
 
+
+# Let’s first take a look at the Output Shape column to understand what is going on here. Our first layer
+# will have 28 × 28 images, and apply 64 filters to them. But because our filter is 3 × 3, a 1-pixel border
+# around the image will be lost, reducing our overall information to 26 × 26 pixels.
+
+# each maxpooling 2x2 reduces 75% de area of the image
+
+#Each convolution is a 3 × 3 filter, plus a bias. Remember earlier with our dense layers, each layer was Y = mX + c,
+# where m was our parameter (aka weight) and c was our bias? This is very similar, except that because the
+# filter is 3 × 3 there are 9 parameters to learn. Given that we have 64 convolutions defined, we’ll have 640 overall
+# parame‐ ters (each convolution has 9 parameters plus a bias, for a total of 10, and there are 64 of them).
+
+
+#The MaxPooling layers don’t learn anything, they just reduce the image, so there are no learned
+# parameters there—hence 0 being reported.
+
+#The next convolutional layer has 64 filters, but each of these is multiplied across the previous 64 filters,
+# each with 9 parameters. We have a bias on each of the new 64 filters, so our number of parameters
+# should be (64 × (64 × 9)) + 64, which gives us 36,928 parameters the network needs to learn.
+
+# By the time we get through the second convolution, our images are 5 × 5, and we have 64 of them. If we
+# multiply this out we now have 1,600 values, which we’ll feed into a dense layer of 128 neurons. Each neuron
+# has a weight and a bias, and we have 128 of them, so the number of parameters the network will learn is
+# ((5 × 5 × 64) × 128) + 128, giving us 204,928 parameters.
+# Our final dense layer of 10 neurons takes in the output of the previous 128, so the number of parameters
+# learned will be (128 × 10) + 10, which is 1,290.
 
