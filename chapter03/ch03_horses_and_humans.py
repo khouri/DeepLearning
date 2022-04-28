@@ -5,15 +5,17 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.layers import MaxPooling2D
 from tensorflow.keras.layers import Flatten
+from tensorflow.keras.optimizers import RMSprop
 
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from chapter03.Data_Generator import Data_Generator
+from chapter03.Download_File_From_Web import Download_File_From_Web
+
 
 class CallBack(tf.keras.callbacks.Callback):
 	def on_epoch_end(self, epochs, logs={}):
 		if(logs.get('accuracy') >= 0.95):
 			print("I have reached the expected accuracy!")
 			self.model.stop_training = True
-
 
 def get_model_architecture():
 
@@ -48,52 +50,45 @@ def get_model_architecture():
 	return(model)
 pass
 
-# here we will download using ImageDataGenerator
-def get_data_train():
-
-	training_dir = 'horse-or-human/training/'
-	train_datagen = ImageDataGenerator(rescale=1 / 255)
-	train_generator = train_datagen.flow_from_directory(training_dir,
-														target_size=(300, 300),
-														class_mode='binary')
-
-	return(train_generator)
-pass
-
-def train_model():
-
-	model = get_model_architecture()
-	(train_images, train_label), (test_images, test_label) = get_data_train()
-
-	model.compile(optimizer = 'adam',
-				  loss= 'sparse_categorical_crossentropy',
-				  metrics = ['accuracy'])
-
-	callback = CallBack()
-	model.fit(train_images,
-			  train_label,
-			  epochs = 50,
-			  callbacks = [callback])
-
-	model.evaluate(test_images, test_label)
-	model.save('saved_models/modelCH03.h5')
-
-	return(model)
-pass
-
 
 if __name__ == '__main__':
 
 	print("Chapter 03_horses_and_humans")
-	# trained_model = train_model()
-	# modelCH03 = tf.keras.models.load_model('saved_models/modelCH03.h5')
-	# (train_images, train_label), (test_images, test_label) = get_data_train()
 
-	# print(modelCH03.summary())
-	from download_horses_andhumans import download_data
+	train_url = "https://storage.googleapis.com/laurencemoroney-blog.appspot.com/horse-or-human.zip"
+	train_file_name = "horse-or-human.zip"
+	training_dir = 'horse-or-human/training/'
+	web_dowloader = Download_File_From_Web(train_url, train_file_name)
+	web_dowloader.download_data_to(training_dir)
 
-	download_data()
+	val_url = "https://storage.googleapis.com/laurencemoroney-blog.appspot.com/validation-horse-or-human.zip"
+	val_file_name = "validation-horse-or-human.zip"
+	validation_dir = 'horse-or-human/validation/'
+	web_dowloader = Download_File_From_Web(val_url, val_file_name)
+	web_dowloader.download_data_to(validation_dir)
 
+	model = get_model_architecture()
+	data_gen_obj = Data_Generator()
+	train_generator = data_gen_obj.get_data_generator(training_dir)
+	val_generator = data_gen_obj.get_data_generator(validation_dir)
+
+	# model.compile(loss ='binary_crossentropy',
+	# 			  optimizer = RMSprop(lr = 0.001),
+	# 			  metrics = ['accuracy'])
+	#
+	# history = model.fit_generator(train_generator, epochs = 15)
+	#
+	# model.save('saved_models/model_horses_humans.h5')
+
+	# model = tf.keras.models.load_model('saved_models/model_horses_humans.h5')
+
+	model.compile(loss ='binary_crossentropy',
+				  optimizer = RMSprop(lr = 0.001),
+				  metrics = ['accuracy'])
+
+	history = model.fit_generator(train_generator,
+								  epochs=15,
+								  validation_data=val_generator)
 pass
 
 
@@ -105,5 +100,7 @@ pass
 # An interesting side note is that these images are all computer-generated. The theory is that features
 # spotted in a CGI image of a horse should apply to a real image. You’ll see how well this works later in this chapter.
 
-
-
+# Note how, by the time the data has gone through all the convolutional and pooling layers, it ends
+# up as 7 × 7 items. The theory is that these will be activated feature maps that are relatively simple,
+# containing just 49 pixels. These feature maps can then be passed to the dense neural network to match them
+# to the appropriate labels.

@@ -72,7 +72,7 @@ def train_model():
 			  callbacks = [callback])
 
 	model.evaluate(test_images, test_label)
-	model.save('saved_models/modelCH03.h5')
+	model.save('saved_models/model.h5')
 
 	return(model)
 pass
@@ -86,7 +86,7 @@ if __name__ == '__main__':
 
 	print(modelCH03.summary())
 
-	# classifications = modelCH03.predict(test_images)
+	# classifications = model.predict(test_images)
 	# print(classifications[0])
 	# print(test_label[0])
 pass
