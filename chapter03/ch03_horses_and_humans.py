@@ -6,16 +6,9 @@ from tensorflow.keras.layers import Conv2D
 from tensorflow.keras.layers import MaxPooling2D
 from tensorflow.keras.layers import Flatten
 from tensorflow.keras.optimizers import RMSprop
-
 from chapter03.Data_Generator import Data_Generator
 from chapter03.Download_File_From_Web import Download_File_From_Web
 
-
-class CallBack(tf.keras.callbacks.Callback):
-	def on_epoch_end(self, epochs, logs={}):
-		if(logs.get('accuracy') >= 0.95):
-			print("I have reached the expected accuracy!")
-			self.model.stop_training = True
 
 def get_model_architecture():
 
@@ -50,10 +43,7 @@ def get_model_architecture():
 	return(model)
 pass
 
-
-if __name__ == '__main__':
-
-	print("Chapter 03_horses_and_humans")
+def create_data_dir():
 
 	train_url = "https://storage.googleapis.com/laurencemoroney-blog.appspot.com/horse-or-human.zip"
 	train_file_name = "horse-or-human.zip"
@@ -67,28 +57,38 @@ if __name__ == '__main__':
 	web_dowloader = Download_File_From_Web(val_url, val_file_name)
 	web_dowloader.download_data_to(validation_dir)
 
-	model = get_model_architecture()
-	data_gen_obj = Data_Generator()
-	train_generator = data_gen_obj.get_data_generator(training_dir)
-	val_generator = data_gen_obj.get_data_generator(validation_dir)
+	return(training_dir, validation_dir)
+pass
 
-	# model.compile(loss ='binary_crossentropy',
-	# 			  optimizer = RMSprop(lr = 0.001),
-	# 			  metrics = ['accuracy'])
-	#
-	# history = model.fit_generator(train_generator, epochs = 15)
-	#
-	# model.save('saved_models/model_horses_humans.h5')
+def train_model(model, train_data_generator, val_data_generator):
 
-	# model = tf.keras.models.load_model('saved_models/model_horses_humans.h5')
-
-	model.compile(loss ='binary_crossentropy',
-				  optimizer = RMSprop(lr = 0.001),
+	saved_model_path = """saved_models/model_horses_humans.h5"""
+	model.compile(loss = 'binary_crossentropy',
+				  optimizer = RMSprop(lr=0.001),
 				  metrics = ['accuracy'])
 
-	history = model.fit_generator(train_generator,
-								  epochs=15,
-								  validation_data=val_generator)
+	history = model.fit_generator(train_data_generator,
+								  epochs = 15,
+								  validation_data = val_data_generator)
+
+	model.save('saved_models/model_horses_humans.h5')
+
+	return(saved_model_path)
+pass
+
+
+if __name__ == '__main__':
+
+	print("Chapter 03_horses_and_humans")
+	training_dir, validation_dir = create_data_dir()
+
+	model = get_model_architecture()
+	train_generator = Data_Generator().get_data_generator(training_dir)
+	val_generator = Data_Generator().get_data_generator(validation_dir)
+
+	saved_model_path = train_model(model, train_generator, val_generator)
+
+	# model = tf.keras.models.load_model('saved_models/model_horses_humans.h5')
 pass
 
 

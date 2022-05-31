@@ -2,7 +2,6 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 class Data_Generator():
 
-	# here we will download using ImageDataGenerator
 	def get_data_generator(self, data_path):
 
 		train_datagen = ImageDataGenerator(rescale=1 / 255)
